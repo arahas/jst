@@ -1,0 +1,20 @@
+[project]
+name = "jst-ipynb-v0"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "folium>=0.19.5",
+    "geoalchemy>=0.7.2",
+    "geoalchemy2>=0.17.1",
+    "geopandas>=1.0.1",
+    "ipykernel>=6.29.5",
+    "mapclassify>=2.8.1",
+    "matplotlib>=3.10.1",
+    "pip>=25.0.1",
+    "psycopg2>=2.9.10",
+    "pyproj>=3.7.1",
+    "python-dotenv>=1.0.1",
+    "sqlalchemy>=2.0.39",
+]
