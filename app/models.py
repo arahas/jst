@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Index, MetaData
+from sqlalchemy import Column, Integer, String, Float, Index, MetaData, TIMESTAMP
 from geoalchemy2 import Geometry
 from .database import Base
 
@@ -29,4 +29,18 @@ class ZipDemographics(Base):
     
     postal_code = Column(String, primary_key=True)
     year = Column(Integer, primary_key=True)
-    population = Column(Float) 
+    population = Column(Float)
+
+class JurisdictionPlan(Base):
+    __tablename__ = "jurisdiction_plans"
+    
+    __table_args__ = (
+        {'schema': 'public'}
+    )
+    
+    plan_identifier = Column(String(100), primary_key=True)
+    program_type = Column(String(10))
+    postal_code = Column(String(10), primary_key=True)
+    delivery_station = Column(String(50))
+    effective_week = Column(String(8), primary_key=True)
+    dw_update_datetime = Column(TIMESTAMP) 

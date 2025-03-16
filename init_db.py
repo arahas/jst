@@ -7,6 +7,8 @@ import glob
 from geoalchemy2 import Geometry
 from pathlib import Path
 from dotenv import load_dotenv
+from sqlalchemy import text
+from sqlalchemy.types import String, TIMESTAMP
 
 def load_config():
     """Load configuration from environment variables or .env file"""
@@ -111,6 +113,105 @@ def load_data(config):
     finally:
         engine.dispose()
 
+def load_jurisdiction_plans(config):
+    """Load and transform jurisdiction plan data into PostgreSQL"""
+    engine = create_engine(get_db_url(config['database']))
+    
+    try:
+        # Load SSD jurisdiction plan with explicit dtypes
+        ssd_df = pd.read_csv('data/jp/amzl_ssd_jurisdiction_plan.csv', 
+                            dtype={
+                                'zip_code': str,
+                                'country': str,
+                                'week': str,
+                                'delivery_station': str,
+                                'plan_id': str
+                            },
+                            parse_dates=['effective_date', 'upload_timestamp', 'dw_update_datetime_pst'])
+        
+        # Transform SSD data
+        ssd_transformed = pd.DataFrame({
+            'plan_identifier': 'amzl_ssd_' + ssd_df['dw_update_datetime_pst'].astype(str),
+            'program_type': 'ssd',
+            'postal_code': ssd_df['zip_code'],
+            'delivery_station': ssd_df['delivery_station'],
+            'effective_week': ssd_df['week'].apply(lambda x: f"2025-{x.replace('Wk ', '').zfill(2)}"),
+            'dw_update_datetime': pd.to_datetime(ssd_df['dw_update_datetime_pst'])
+        })
+        
+        # Load Core jurisdiction plan with explicit dtypes
+        core_df = pd.read_csv('data/jp/amzl_core_jurisdiction_plan.csv',
+                             dtype={
+                                 'postal_code': str,
+                                 'delivery_station': str,
+                                 'effective_week': str
+                             },
+                             parse_dates=['active_from', 'active_from_orig', 'active_until', 'dw_ingest_time'])
+        
+        # Transform Core data
+        core_transformed = pd.DataFrame({
+            'plan_identifier': 'amzl_core_' + core_df['dw_ingest_time'].astype(str),
+            'program_type': 'core',
+            'postal_code': core_df['postal_code'],
+            'delivery_station': core_df['delivery_station'],
+            'effective_week': core_df['effective_week'],
+            'dw_update_datetime': pd.to_datetime(core_df['dw_ingest_time'])
+        })
+        
+        # Get the intersection of effective weeks
+        ssd_weeks = set(ssd_transformed['effective_week'].unique())
+        core_weeks = set(core_transformed['effective_week'].unique())
+        valid_weeks = ssd_weeks.intersection(core_weeks)
+        
+        print(f"Found {len(valid_weeks)} overlapping weeks between SSD and Core data")
+        
+        # Filter both dataframes to only include overlapping weeks
+        ssd_transformed = ssd_transformed[ssd_transformed['effective_week'].isin(valid_weeks)]
+        core_transformed = core_transformed[core_transformed['effective_week'].isin(valid_weeks)]
+        
+        # Combine both dataframes
+        combined_df = pd.concat([ssd_transformed, core_transformed], ignore_index=True)
+        
+        # Create the table with proper data types
+        create_table_sql = text("""
+        CREATE TABLE IF NOT EXISTS jurisdiction_plans (
+            plan_identifier VARCHAR(100),
+            program_type VARCHAR(10),
+            postal_code VARCHAR(10),
+            delivery_station VARCHAR(50),
+            effective_week VARCHAR(8),
+            dw_update_datetime TIMESTAMP,
+            PRIMARY KEY (plan_identifier, postal_code, effective_week)
+        );
+        """)
+        
+        with engine.connect() as connection:
+            connection.execute(create_table_sql)
+            connection.commit()
+            print("Successfully created jurisdiction_plans table")
+        
+        # Load combined data to PostgreSQL
+        combined_df.to_sql(
+            name='jurisdiction_plans',
+            con=engine,
+            if_exists='replace',
+            index=False,
+            dtype={
+                'plan_identifier': String(100),
+                'program_type': String(10),
+                'postal_code': String(10),
+                'delivery_station': String(50),
+                'effective_week': String(8),
+                'dw_update_datetime': TIMESTAMP
+            }
+        )
+        print("Successfully loaded jurisdiction_plans data")
+        
+    except Exception as e:
+        print(f"Error loading jurisdiction plans: {e}")
+    finally:
+        engine.dispose()
+
 def main():
     """Main function to initialize database and load data"""
     print("Loading configuration...")
@@ -121,6 +222,9 @@ def main():
     
     print("\nLoading data into PostgreSQL...")
     load_data(config)
+    
+    print("\nLoading jurisdiction plans...")
+    load_jurisdiction_plans(config)
     
     print("\nDatabase initialization complete!")
 
