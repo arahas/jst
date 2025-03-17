@@ -10,6 +10,8 @@ interface JurisdictionSummaryProps {
     postalCodeCount: number
     population: number
     postalCodes: string[]
+    isMainStation?: boolean
+    recursive?: boolean
   }
 }
 
@@ -26,8 +28,14 @@ export default function JurisdictionSummary({ data }: JurisdictionSummaryProps) 
     ? data.postalCodes 
     : data.postalCodes.slice(0, displayLimit)
   
-  // Determine card color based on program type
-  const getProgramColor = (program: string) => {
+  // Determine card color based on program type and main station status
+  const getProgramColor = (program: string, isMainStation?: boolean) => {
+    // If this is the main station in recursive mode
+    if (data.recursive && isMainStation) {
+      return 'border-purple-500 bg-purple-50'; // Main station
+    }
+    
+    // Regular program types
     switch (program.toLowerCase()) {
       case 'core':
         return 'border-blue-500 bg-blue-50'
@@ -38,20 +46,24 @@ export default function JurisdictionSummary({ data }: JurisdictionSummaryProps) 
     }
   }
   
-  const cardColor = getProgramColor(data.program)
+  const cardColor = getProgramColor(data.program, data.isMainStation)
+  
+  // Determine title based on station and program
+  const getTitle = () => {
+    const stationLabel = data.isMainStation && data.recursive 
+      ? `${data.node} (Main)` 
+      : data.node;
+    
+    return `${stationLabel} - ${data.program.toUpperCase()}`;
+  }
   
   return (
     <div className={`rounded-lg border-l-4 ${cardColor} p-5 shadow-md`}>
       <div className="flex justify-between items-start mb-4">
-        <h3 className="text-xl font-bold">{data.program.toUpperCase()} Program</h3>
+        <h3 className="text-xl font-bold">{getTitle()}</h3>
       </div>
       
       <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-2">
-          <div className="text-sm text-gray-600">Node:</div>
-          <div className="text-sm font-medium">{data.node}</div>
-        </div>
-        
         <div className="grid grid-cols-2 gap-2">
           <div className="text-sm text-gray-600">Effective Week:</div>
           <div className="text-sm font-medium">{data.effectiveWeek}</div>
@@ -66,6 +78,17 @@ export default function JurisdictionSummary({ data }: JurisdictionSummaryProps) 
           <div className="text-sm text-gray-600">Jurisdiction Population:</div>
           <div className="text-sm font-medium">{formattedPopulation}</div>
         </div>
+        
+        {data.recursive && (
+          <div className="grid grid-cols-2 gap-2">
+            <div className="text-sm text-gray-600">Search Mode:</div>
+            <div className="text-sm font-medium">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                Recursive
+              </span>
+            </div>
+          </div>
+        )}
         
         <div>
           <div className="text-sm text-gray-600 mb-1">Postal Codes:</div>

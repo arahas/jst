@@ -12,6 +12,7 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
   const [deliveryStation, setDeliveryStation] = useState('')
   const [effectiveWeek, setEffectiveWeek] = useState('')
   const [programType, setProgramType] = useState('all')
+  const [recursive, setRecursive] = useState(false)
   const [availableWeeks, setAvailableWeeks] = useState<string[]>([])
   const [stationSuggestions, setStationSuggestions] = useState<string[]>([])
   const [showStationSuggestions, setShowStationSuggestions] = useState(false)
@@ -97,6 +98,10 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
     setProgramType(e.target.value)
   }
 
+  const handleRecursiveChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setRecursive(e.target.checked)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -108,7 +113,7 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
       }
       
       // Create a string representation of the current form data to check for changes
-      const currentDataString = JSON.stringify({ deliveryStation, effectiveWeek, programType })
+      const currentDataString = JSON.stringify({ deliveryStation, effectiveWeek, programType, recursive })
       
       // Skip API call if the data hasn't changed
       if (currentDataString === lastSubmittedData) {
@@ -122,32 +127,55 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
         effective_week: effectiveWeek || undefined,
         program_type: programType === 'all' ? undefined : programType,
         geometry: true,
-        population: true
+        population: true,
+        recursive: recursive
       })
       
-      // Process the response to organize by program type
-      const programTypes = new Set<string>()
+      console.log("API Response:", response);
       
-      // Extract all program types from the response
-      response.features.forEach((feature: any) => {
-        if (feature.properties.program_type) {
-          programTypes.add(feature.properties.program_type)
+      // Create a map of station-program combinations
+      const stationProgramMap = new Map<string, GeoJsonFeature[]>()
+      
+      // Process each feature to organize by station-program combination
+      response.features.forEach((feature: GeoJsonFeature) => {
+        const station = feature.properties.delivery_station || 'unknown'
+        const program = feature.properties.program_type || 'unknown'
+        const key = `${station}:${program}`
+        
+        if (!stationProgramMap.has(key)) {
+          stationProgramMap.set(key, [])
         }
+        
+        stationProgramMap.get(key)?.push(feature)
       })
       
-      // Create tag groups for each program type
-      const tagGroups: TagGroup[] = Array.from(programTypes).map(program => {
-        const features = response.features.filter((feature: any) => 
-          feature.properties.program_type === program
-        )
+      console.log("Station-Program Combinations:", Array.from(stationProgramMap.keys()));
+      
+      // Create tag groups for each station-program combination
+      const tagGroups: TagGroup[] = []
+      
+      stationProgramMap.forEach((features, key) => {
+        const [station, program] = key.split(':')
+        const postalCodes = features.map(feature => feature.properties.postal_code)
         
-        const postalCodes = features.map((feature: any) => feature.properties.postal_code)
+        // Check if this is the main station (the one the user searched for)
+        const isMainStation = station.toLowerCase().includes(deliveryStation.toLowerCase())
         
-        return {
-          tag: program,
+        tagGroups.push({
+          tag: `${station} - ${program.toUpperCase()}`,
           features,
-          postalCodes
-        }
+          postalCodes,
+          isStation: true,
+          stationName: station,
+          programType: program
+        })
+      })
+      
+      // Sort tag groups to put main station combinations first
+      tagGroups.sort((a, b) => {
+        const aIsMain = a.stationName?.toLowerCase().includes(deliveryStation.toLowerCase()) ? 1 : 0
+        const bIsMain = b.stationName?.toLowerCase().includes(deliveryStation.toLowerCase()) ? 1 : 0
+        return bIsMain - aIsMain // Main stations first
       })
       
       // If program_type is 'all', add a tag group for all features
@@ -155,17 +183,17 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
         const allPostalCodes = response.features.map((feature: any) => feature.properties.postal_code)
         
         tagGroups.unshift({
-          tag: 'All Programs',
+          tag: 'All Combinations',
           features: response.features,
           postalCodes: allPostalCodes
         })
       }
       
-      // Create summary data for each program type
+      // Create summary data for each station-program combination
       const summaryData: Record<string, any> = {}
       
       tagGroups.forEach(group => {
-        if (group.tag === 'All Programs') return // Skip the "All Programs" group for summary
+        if (group.tag === 'All Combinations') return // Skip the "All Combinations" group for summary
         
         // Calculate total population from the latest year for each postal code
         let totalPopulation = 0
@@ -186,15 +214,22 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
           }
         })
         
+        // Determine if this is the main station
+        const isMainStation = group.stationName ? group.stationName.toLowerCase().includes(deliveryStation.toLowerCase()) : false
+        
         summaryData[group.tag] = {
-          node: deliveryStation,
-          program: group.tag,
+          node: group.stationName || 'unknown',
+          program: group.programType || 'unknown',
           effectiveWeek,
           postalCodeCount: postalCodeSet.size,
           population: totalPopulation,
-          postalCodes: Array.from(postalCodeSet)
+          postalCodes: Array.from(postalCodeSet),
+          isMainStation: isMainStation,
+          recursive: recursive
         }
       })
+      
+      console.log("Summary Data:", summaryData);
       
       // Create processed data for the map and charts
       const processedData: ProcessedMapData = {
@@ -266,7 +301,7 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
           {showWeekSuggestions && availableWeeks.length > 0 && (
             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
               {availableWeeks
-                .filter(week => week.includes(effectiveWeek))
+                .filter(week => week.toLowerCase().includes(effectiveWeek.toLowerCase()))
                 .map((week, index) => (
                   <div
                     key={index}
@@ -291,20 +326,34 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
             onChange={handleProgramTypeChange}
             className="w-full p-2 border border-gray-300 rounded-md focus:ring-amazon-blue focus:border-amazon-blue"
           >
-            <option value="all">All</option>
+            <option value="all">All Programs</option>
             <option value="core">Core</option>
             <option value="ssd">SSD</option>
           </select>
         </div>
       </div>
       
+      {/* Recursive Option */}
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          id="recursive"
+          checked={recursive}
+          onChange={handleRecursiveChange}
+          className="h-4 w-4 text-amazon-blue focus:ring-amazon-blue border-gray-300 rounded"
+        />
+        <label htmlFor="recursive" className="ml-2 block text-sm text-gray-700">
+          Include all delivery stations covering the same postal codes (Recursive Search)
+        </label>
+      </div>
+      
       <div>
         <button
           type="submit"
           disabled={isLoading}
-          className="px-4 py-2 bg-amazon-yellow text-amazon-blue font-medium rounded-md hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-amazon-yellow disabled:opacity-50"
+          className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amazon-blue hover:bg-amazon-blue-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amazon-blue ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
         >
-          {isLoading ? 'Loading...' : 'Submit'}
+          {isLoading ? 'Loading...' : 'View Jurisdiction'}
         </button>
       </div>
       

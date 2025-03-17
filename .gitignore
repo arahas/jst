@@ -27,5 +27,8 @@ wheels/
 # Data files
 data/
 
+# Temporary files
+validation/
+
 # Virtual environments
 .venv

@@ -256,7 +256,13 @@ def get_node_data(
         query = db.query(models.JurisdictionPlan)
         
         # Filter by delivery station (including partial matches)
-        query = query.filter(models.JurisdictionPlan.delivery_station.ilike(f'%{delivery_station}%'))
+        if delivery_station.upper() != "ADDITIONAL-ZIPS":
+            query = query.filter(models.JurisdictionPlan.delivery_station.ilike(f'%{delivery_station}%'))
+            # Also exclude ADDITIONAL-ZIPS from partial matches
+            query = query.filter(models.JurisdictionPlan.delivery_station != "ADDITIONAL-ZIPS")
+        else:
+            # If specifically requesting ADDITIONAL-ZIPS, exact match only
+            query = query.filter(models.JurisdictionPlan.delivery_station == "ADDITIONAL-ZIPS")
         
         # Filter by effective week
         query = query.filter(models.JurisdictionPlan.effective_week == effective_week)
@@ -281,7 +287,8 @@ def get_node_data(
             # Query for all delivery stations that cover any of these postal codes
             recursive_query = db.query(models.JurisdictionPlan.delivery_station)\
                 .filter(models.JurisdictionPlan.postal_code.in_(postal_codes))\
-                .filter(models.JurisdictionPlan.effective_week == effective_week)
+                .filter(models.JurisdictionPlan.effective_week == effective_week)\
+                .filter(models.JurisdictionPlan.delivery_station != "ADDITIONAL-ZIPS")  # Exclude the catch-all category
             
             # Apply program type filter if specified
             if program_type.lower() != 'all':

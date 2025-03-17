@@ -48,6 +48,7 @@ function Legend({ tagGroups }: { tagGroups: TagGroup[] }) {
         <div className="space-y-2">
           {tagGroups.map((group, index) => {
             const color = stringToColor(group.tag)
+            
             return (
               <div key={index} className="flex items-center">
                 <div 
@@ -138,14 +139,47 @@ export default function LeafletMap({ data, allFeatures }: LeafletMapProps) {
                 })}
                 onEachFeature={(feature, layer) => {
                   const props = feature.properties
-                  layer.bindPopup(`
-                    <div>
-                      <h3 class="font-bold">${props.postal_code}</h3>
-                      <p>Tag: ${group.tag}</p>
-                      <p>Lat: ${props.lat}</p>
-                      <p>Long: ${props.long}</p>
+                  
+                  // Create a more detailed popup based on available properties
+                  let popupContent = `
+                    <div class="p-2">
+                      <h3 class="font-bold text-lg border-b pb-1 mb-2">${props.postal_code}</h3>
+                      <div class="space-y-1">
+                  `;
+                  
+                  // Add station-program combination
+                  if (props.delivery_station && props.program_type) {
+                    const isMainStation = props.is_main_station ? 
+                      '<span class="bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded-full ml-1">Main</span>' : '';
+                    popupContent += `
+                      <p><span class="font-semibold">Station:</span> ${props.delivery_station} ${isMainStation}</p>
+                      <p><span class="font-semibold">Program:</span> ${props.program_type.toUpperCase()}</p>
+                    `;
+                  }
+                  
+                  // Add coordinates
+                  popupContent += `
+                    <p><span class="font-semibold">Coordinates:</span> ${props.lat}, ${props.long}</p>
+                  `;
+                  
+                  // Add population if available
+                  if (props.demographics && props.demographics.length > 0) {
+                    const latestDemographic = props.demographics.reduce((latest: {year: number, population: number}, current: {year: number, population: number}) => {
+                      return latest.year > current.year ? latest : current;
+                    }, { year: 0, population: 0 });
+                    
+                    popupContent += `
+                      <p><span class="font-semibold">Population (${latestDemographic.year}):</span> ${latestDemographic.population.toLocaleString()}</p>
+                    `;
+                  }
+                  
+                  // Close the popup content
+                  popupContent += `
+                      </div>
                     </div>
-                  `)
+                  `;
+                  
+                  layer.bindPopup(popupContent);
                 }}
               />
             </LayersControl.Overlay>
