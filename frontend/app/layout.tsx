@@ -1,16 +1,16 @@
-import './globals.css'
-import type { Metadata } from 'next'
+'use client'
 
-export const metadata: Metadata = {
-  title: 'ZIP Code Explorer',
-  description: 'Explore ZIP code boundaries and demographics',
-}
+import './globals.css'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const pathname = usePathname()
+
   return (
     <html lang="en">
       <body>
@@ -20,10 +20,20 @@ export default function RootLayout({
             <nav>
               <ul className="flex space-x-6">
                 <li>
-                  <a href="/" className="hover:text-amazon-yellow">Lookup</a>
+                  <Link 
+                    href="/" 
+                    className={`hover:text-amazon-yellow ${pathname === '/' ? 'text-amazon-yellow' : ''}`}
+                  >
+                    Lookup
+                  </Link>
                 </li>
                 <li>
-                  <a href="/jurisdiction" className="hover:text-amazon-yellow">Jurisdiction Viewer</a>
+                  <Link 
+                    href="/jurisdiction" 
+                    className={`hover:text-amazon-yellow ${pathname === '/jurisdiction' ? 'text-amazon-yellow' : ''}`}
+                  >
+                    Jurisdiction Viewer
+                  </Link>
                 </li>
               </ul>
             </nav>

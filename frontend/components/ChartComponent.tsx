@@ -10,7 +10,8 @@ import {
   Tooltip,
   Legend,
   ChartData,
-  ChartOptions
+  ChartOptions,
+  Plugin
 } from 'chart.js'
 import { Bar } from 'react-chartjs-2'
 import { TagGroup, GeoJsonFeature, DemographicData } from '@/lib/types'
@@ -24,6 +25,52 @@ ChartJS.register(
   Tooltip,
   Legend
 )
+
+// Create a custom plugin to display total population above each stacked bar
+const TotalLabelsPlugin: Plugin<'bar'> = {
+  id: 'totalLabels',
+  afterDraw(chart) {
+    const { ctx, data, chartArea, scales } = chart;
+    
+    if (!data.datasets.length) return;
+    
+    ctx.save();
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    
+    // For each x-axis label (year)
+    data.labels?.forEach((label, index) => {
+      // Calculate total for this index across all datasets
+      let total = 0;
+      data.datasets.forEach(dataset => {
+        total += Number(dataset.data[index]) || 0;
+      });
+      
+      // Format the total with commas for thousands
+      const formattedTotal = total.toLocaleString();
+      
+      // Position the label between the legend and the chart area
+      const x = scales.x.getPixelForValue(index);
+      // Safely access legend and position labels between legend and chart
+      const legendBottom = chart.legend?.bottom || chartArea.top - 30;
+      const y = legendBottom + 15;
+      
+      // Draw a small white background for better readability
+      const textWidth = ctx.measureText(formattedTotal).width;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.fillRect(x - textWidth/2 - 4, y - 12, textWidth + 8, 16);
+      
+      // Draw the text
+      ctx.fillStyle = '#000';
+      ctx.fillText(formattedTotal, x, y);
+    });
+    
+    ctx.restore();
+  }
+};
+
+// Register the plugin globally
+ChartJS.register(TotalLabelsPlugin);
 
 interface ChartComponentProps {
   data: TagGroup
@@ -74,6 +121,15 @@ export default function ChartComponent({ data }: ChartComponentProps) {
       }
     })
 
+    // Calculate total population for each year
+    const yearTotals = sortedYears.map(year => {
+      let total = 0
+      Object.values(postalCodeData).forEach(yearData => {
+        total += yearData[year] || 0
+      })
+      return total
+    })
+
     // Set chart data
     setChartData({
       labels: sortedYears.map(year => year.toString()),
@@ -87,15 +143,23 @@ export default function ChartComponent({ data }: ChartComponentProps) {
       plugins: {
         legend: {
           position: 'top' as const,
+          // Add more space below the legend
+          labels: {
+            boxHeight: 12,
+            padding: 20 // Increased padding to create more space
+          }
         },
         title: {
           display: true,
           text: `Population by Year for ${data.tag}`,
+          padding: {
+            bottom: 20 // Add padding below the title
+          }
         },
         tooltip: {
           mode: 'index',
           intersect: false,
-        },
+        }
       },
       scales: {
         x: {
@@ -111,8 +175,17 @@ export default function ChartComponent({ data }: ChartComponentProps) {
             text: 'Population'
           },
           stacked: true,
+          ticks: {
+            padding: 5
+          }
         },
       },
+      // Add padding at the top of the chart for the total labels
+      layout: {
+        padding: {
+          top: 20 // Reduced from 40px to 20px
+        }
+      }
     })
   }, [data])
 
