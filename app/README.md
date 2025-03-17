@@ -190,6 +190,7 @@ GET /node/
 | program_type | string | No | 'all' | Filter by program type: 'core', 'ssd', or 'all' |
 | geometry | boolean | No | true | Include geometry data in the response |
 | population | boolean | No | false | Include historical population data |
+| recursive | boolean | No | false | If true, includes all delivery stations that cover the same postal codes as the main station |
 
 #### Example Requests
 ```bash
@@ -201,6 +202,9 @@ GET /node/?delivery_station=DAB5&effective_week=2025-01&program_type=ssd
 
 # Get coverage with population data
 GET /node/?delivery_station=DAB5&population=true
+
+# Get coverage with recursive search for all related delivery stations
+GET /node/?delivery_station=DAB5&recursive=true
 ```
 
 #### Example Response
@@ -217,6 +221,7 @@ GET /node/?delivery_station=DAB5&population=true
         "effective_week": "2025-01",
         "plan_identifier": "amzl_ssd_2025-01-01T00:00:00",
         "dw_update_datetime": "2025-01-01T00:00:00Z",
+        "is_main_station": true,
         "lat": "47.6167",
         "long": "-122.2",
         "demographics": [
@@ -235,7 +240,10 @@ GET /node/?delivery_station=DAB5&population=true
     "delivery_station": "DAB5",
     "effective_week": "2025-01",
     "program_type": "ssd",
-    "total_postal_codes": 1
+    "recursive": false,
+    "total_postal_codes": 1,
+    "total_delivery_stations": 1,
+    "delivery_stations": ["DAB5"]
   }
 }
 ```

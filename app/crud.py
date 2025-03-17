@@ -233,16 +233,24 @@ def get_node_data(
     effective_week: str = None,
     program_type: str = 'all',
     include_geometry: bool = True,
-    include_population: bool = False
+    include_population: bool = False,
+    recursive: bool = False
 ):
     """
     Get node (delivery station) coverage data with optional geometry and population data.
     Returns data in GeoJSON format.
+    
+    If recursive=True, also returns data for all delivery stations that cover the same postal codes
+    as the main delivery station.
     """
     try:
+        print(f"Starting get_node_data for delivery_station={delivery_station}, recursive={recursive}")
+        
         # Get the minimum effective week if none provided
         if not effective_week:
             effective_week = db.query(func.min(models.JurisdictionPlan.effective_week)).scalar()
+        
+        print(f"Using effective_week={effective_week}")
 
         # Base query for jurisdiction plans
         query = db.query(models.JurisdictionPlan)
@@ -259,24 +267,76 @@ def get_node_data(
 
         # Get all matching jurisdiction plans
         plans = query.all()
+        print(f"Found {len(plans)} plans for delivery station {delivery_station}")
+        
+        # Get postal codes for the main delivery station
+        postal_codes = [plan.postal_code for plan in plans]
+        print(f"Main delivery station covers {len(postal_codes)} postal codes")
+        
+        # If recursive mode is enabled, find all delivery stations that cover these postal codes
+        all_delivery_stations = set([plan.delivery_station for plan in plans])
+        if recursive and postal_codes:
+            print(f"Recursive mode enabled. Finding all delivery stations covering the same postal codes...")
+            
+            # Query for all delivery stations that cover any of these postal codes
+            recursive_query = db.query(models.JurisdictionPlan.delivery_station)\
+                .filter(models.JurisdictionPlan.postal_code.in_(postal_codes))\
+                .filter(models.JurisdictionPlan.effective_week == effective_week)
+            
+            # Apply program type filter if specified
+            if program_type.lower() != 'all':
+                recursive_query = recursive_query.filter(models.JurisdictionPlan.program_type == program_type.lower())
+            
+            # Get unique delivery stations
+            recursive_stations = set([row[0] for row in recursive_query.distinct().all()])
+            
+            # Remove the main delivery station from the set
+            recursive_stations = recursive_stations - all_delivery_stations
+            
+            print(f"Found {len(recursive_stations)} additional delivery stations covering the same postal codes")
+            
+            # Get plans for these additional delivery stations
+            if recursive_stations:
+                additional_query = db.query(models.JurisdictionPlan)\
+                    .filter(models.JurisdictionPlan.delivery_station.in_(recursive_stations))\
+                    .filter(models.JurisdictionPlan.effective_week == effective_week)
+                
+                if program_type.lower() != 'all':
+                    additional_query = additional_query.filter(models.JurisdictionPlan.program_type == program_type.lower())
+                
+                additional_plans = additional_query.all()
+                print(f"Retrieved {len(additional_plans)} additional plans")
+                
+                # Add these plans to our main plans list
+                plans.extend(additional_plans)
+                
+                # Update the set of all delivery stations
+                all_delivery_stations.update(recursive_stations)
+            
+            print(f"Total plans after recursive search: {len(plans)}")
+            print(f"Total unique delivery stations: {len(all_delivery_stations)}")
+        
+        # Get all postal codes from all plans
+        all_postal_codes = set([plan.postal_code for plan in plans])
+        print(f"Total unique postal codes: {len(all_postal_codes)}")
         
         # Create features list for GeoJSON
         features = []
-        postal_codes = [plan.postal_code for plan in plans]
         
         # Get all zip codes data for the postal codes
         zip_codes = {}
-        if postal_codes:
+        if all_postal_codes:
             zip_codes_query = db.query(models.ZipCode).filter(
-                models.ZipCode.postal_code.in_(postal_codes)
+                models.ZipCode.postal_code.in_(all_postal_codes)
             )
             zip_codes = {zc.postal_code: zc for zc in zip_codes_query.all()}
+            print(f"Retrieved ZIP code data for {len(zip_codes)} postal codes")
         
         # Get population data if requested
         populations = {}
-        if include_population and postal_codes:
+        if include_population and all_postal_codes:
             pop_query = db.query(models.ZipDemographics).filter(
-                models.ZipDemographics.postal_code.in_(postal_codes)
+                models.ZipDemographics.postal_code.in_(all_postal_codes)
             ).order_by(models.ZipDemographics.year)
             
             for pop in pop_query.all():
@@ -286,6 +346,8 @@ def get_node_data(
                     "year": pop.year,
                     "population": pop.population
                 })
+            
+            print(f"Retrieved population data for {len(populations)} postal codes")
 
         # Process each jurisdiction plan
         for plan in plans:
@@ -295,7 +357,8 @@ def get_node_data(
                 "program_type": plan.program_type,
                 "effective_week": plan.effective_week,
                 "plan_identifier": plan.plan_identifier,
-                "dw_update_datetime": plan.dw_update_datetime
+                "dw_update_datetime": plan.dw_update_datetime,
+                "is_main_station": plan.delivery_station in [ds for ds in all_delivery_stations if ds.lower().find(delivery_station.lower()) >= 0]
             }
             
             # Add zip code data if available
@@ -338,8 +401,13 @@ def get_node_data(
             "delivery_station": delivery_station,
             "effective_week": effective_week,
             "program_type": program_type,
-            "total_postal_codes": len(features)
+            "recursive": recursive,
+            "total_postal_codes": len(all_postal_codes),
+            "total_delivery_stations": len(all_delivery_stations),
+            "delivery_stations": list(all_delivery_stations)
         }
+        
+        print(f"Returning {len(features)} features with {len(all_delivery_stations)} delivery stations")
 
         # Create and return FeatureCollection with metadata
         return {

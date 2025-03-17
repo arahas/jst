@@ -91,11 +91,15 @@ def get_node(
     program_type: str = Query('all', description="Filter by program type: 'core', 'ssd', or 'all'"),
     geometry: bool = Query(True, description="Include geometry data in the response"),
     population: bool = Query(False, description="Include historical population data"),
+    recursive: bool = Query(False, description="If true, includes all delivery stations that cover the same postal codes as the main station"),
     db: Session = Depends(get_db)
 ):
     """
     Get postal code coverage for a delivery station with optional geometry and population data.
     Returns data in GeoJSON format with additional metadata.
+    
+    If recursive=True, also returns data for all delivery stations that cover the same postal codes
+    as the main delivery station.
     """
     return crud.get_node_data(
         db=db,
@@ -103,7 +107,8 @@ def get_node(
         effective_week=effective_week,
         program_type=program_type,
         include_geometry=geometry,
-        include_population=population
+        include_population=population,
+        recursive=recursive
     )
 
 @app.get("/node-reverse/", response_model=schemas.NodeResponse)
