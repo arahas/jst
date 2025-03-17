@@ -67,6 +67,13 @@ def get_available_years(db: Session = Depends(get_db)):
     """
     return crud.get_available_years(db)
 
+@app.get("/effective-weeks/", response_model=List[str])
+def get_effective_weeks(db: Session = Depends(get_db)):
+    """
+    Get list of unique effective weeks from jurisdiction plans
+    """
+    return crud.get_effective_weeks(db)
+
 @app.get("/stats/")
 def get_stats(
     year: Optional[int] = None,

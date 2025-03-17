@@ -86,7 +86,24 @@ GET /years/
 [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020]
 ```
 
-### 3. Get Statistics
+### 3. Get Available Effective Weeks
+Retrieve a list of unique effective weeks from jurisdiction plans.
+
+```
+GET /effective-weeks/
+```
+
+#### Example Request
+```bash
+GET /effective-weeks/
+```
+
+#### Example Response
+```json
+["2023-01", "2023-02", "2023-03", "2023-04", "2023-05"]
+```
+
+### 4. Get Statistics
 Retrieve statistical information about ZIP codes and demographics data.
 
 ```
@@ -158,7 +175,7 @@ GET /stats/?year=2020
 }
 ```
 
-### 4. Get Node Coverage
+### 5. Get Node Coverage
 Retrieve postal code coverage information for a delivery station.
 
 ```
@@ -223,7 +240,7 @@ GET /node/?delivery_station=DAB5&population=true
 }
 ```
 
-### 5. Get Reverse Node Coverage
+### 6. Get Reverse Node Coverage
 Retrieve delivery station coverage information for given postal codes.
 
 ```

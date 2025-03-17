@@ -475,3 +475,19 @@ def get_node_reverse_data(
     except Exception as e:
         print(f"Error in get_node_reverse_data: {e}")
         raise 
+
+def get_effective_weeks(db: Session):
+    """
+    Retrieve all unique effective weeks from the jurisdiction_plans table.
+    Returns them sorted in ascending order.
+    """
+    # Query for unique effective weeks
+    result = db.query(models.JurisdictionPlan.effective_week)\
+        .distinct()\
+        .order_by(models.JurisdictionPlan.effective_week)\
+        .all()
+    
+    # Extract the effective week values from the result tuples
+    weeks = [row[0] for row in result]
+    
+    return weeks 
