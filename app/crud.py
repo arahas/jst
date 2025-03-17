@@ -255,14 +255,21 @@ def get_node_data(
         # Base query for jurisdiction plans
         query = db.query(models.JurisdictionPlan)
         
+        # Check if specifically requesting Additional Zips
+        is_additional_zips = delivery_station.upper() == "ADDITIONAL-ZIPS" or delivery_station.lower() == "additional zips"
+        
         # Filter by delivery station (including partial matches)
-        if delivery_station.upper() != "ADDITIONAL-ZIPS":
+        if not is_additional_zips:
             query = query.filter(models.JurisdictionPlan.delivery_station.ilike(f'%{delivery_station}%'))
-            # Also exclude ADDITIONAL-ZIPS from partial matches
+            # Exclude all variations of Additional Zips
+            query = query.filter(~models.JurisdictionPlan.delivery_station.ilike("additional%zips"))
             query = query.filter(models.JurisdictionPlan.delivery_station != "ADDITIONAL-ZIPS")
         else:
-            # If specifically requesting ADDITIONAL-ZIPS, exact match only
-            query = query.filter(models.JurisdictionPlan.delivery_station == "ADDITIONAL-ZIPS")
+            # If specifically requesting Additional Zips, use exact match for either variation
+            query = query.filter(
+                (models.JurisdictionPlan.delivery_station == "ADDITIONAL-ZIPS") | 
+                (models.JurisdictionPlan.delivery_station == "Additional Zips")
+            )
         
         # Filter by effective week
         query = query.filter(models.JurisdictionPlan.effective_week == effective_week)
@@ -288,7 +295,7 @@ def get_node_data(
             recursive_query = db.query(models.JurisdictionPlan.delivery_station)\
                 .filter(models.JurisdictionPlan.postal_code.in_(postal_codes))\
                 .filter(models.JurisdictionPlan.effective_week == effective_week)\
-                .filter(models.JurisdictionPlan.delivery_station != "ADDITIONAL-ZIPS")  # Exclude the catch-all category
+                .filter(~models.JurisdictionPlan.delivery_station.ilike("additional%zips"))  # Exclude all variations of Additional Zips
             
             # Apply program type filter if specified
             if program_type.lower() != 'all':
