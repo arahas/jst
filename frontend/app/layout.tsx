@@ -16,7 +16,7 @@ export default function RootLayout({
       <body>
         <header className="bg-amazon-darkblue text-white p-4">
           <div className="container mx-auto flex justify-between items-center">
-            <h1 className="text-2xl font-bold">ZIP Code Explorer</h1>
+            <h1 className="text-2xl font-bold">ZipScape 🌐</h1>
             <nav>
               <ul className="flex space-x-6">
                 <li>
@@ -44,7 +44,7 @@ export default function RootLayout({
         </main>
         <footer className="bg-amazon-lightblue text-white p-4 mt-8">
           <div className="container mx-auto text-center">
-            <p>© {new Date().getFullYear()} ZIP Code Explorer</p>
+            <p>© {new Date().getFullYear()} ZipScape 🌐</p>
           </div>
         </footer>
       </body>

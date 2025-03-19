@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'ZIP Code Explorer',
-  description: 'Explore ZIP code boundaries and demographics',
+  title: 'ZipScape 🌐',
+  description: 'Explore ZIP code boundaries, jurisdictions, and demographics data',
 } 

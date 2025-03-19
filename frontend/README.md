@@ -1,6 +1,6 @@
-# ZIP Code Explorer Frontend
+# ZipScape 🌐
 
-A Next.js application for exploring ZIP code boundaries and demographics data.
+A Next.js application for exploring ZIP code boundaries, jurisdictions, and demographics data.
 
 ## Features
 

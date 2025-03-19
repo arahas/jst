@@ -19,13 +19,13 @@ export default function JurisdictionViewer() {
   return (
     <div className="flex flex-col gap-8">
       <section className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold mb-4 text-amazon-blue">Jurisdiction Viewer</h2>
+        <h2 className="text-2xl font-bold mb-4 text-amazon-blue">ZipScape Jurisdiction</h2>
         <JurisdictionForm onSubmit={handleFormSubmit} />
       </section>
 
       {summaryData && (
         <section className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold mb-4 text-amazon-blue">Jurisdiction Summary</h2>
+          <h2 className="text-2xl font-bold mb-4 text-amazon-blue">ZipScape Jurisdiction Summary</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {Object.keys(summaryData).map((programType) => (
               <JurisdictionSummary 
@@ -40,12 +40,12 @@ export default function JurisdictionViewer() {
       {jurisdictionData && (
         <>
           <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-bold mb-4 text-amazon-blue">Jurisdiction Map</h2>
+            <h2 className="text-2xl font-bold mb-4 text-amazon-blue">ZipScape Jurisdiction Map</h2>
             <MapComponent data={jurisdictionData} />
           </section>
 
           <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-bold mb-4 text-amazon-blue">Population Charts</h2>
+            <h2 className="text-2xl font-bold mb-4 text-amazon-blue">ZipScape Demographics</h2>
             <div className="grid grid-cols-1 gap-8">
               {jurisdictionData.tagGroups.map((group, index) => (
                 <div key={`${group.tag}-${index}`} className="border p-4 rounded-lg">
