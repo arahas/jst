@@ -15,10 +15,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-# Use more specific patterns to avoid ignoring frontend/lib
-/lib/
-# Make sure frontend/lib is tracked
-!frontend/lib/
+lib/
 lib64/
 parts/
 sdist/
@@ -35,3 +32,9 @@ validation/
 
 # Virtual environments
 .venv
+
+# Frontend build artifacts
+node_modules/
+.next/
+out/
+.DS_Store
