@@ -15,7 +15,10 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# Use more specific patterns to avoid ignoring frontend/lib
+/lib/
+# Make sure frontend/lib is tracked
+!frontend/lib/
 lib64/
 parts/
 sdist/
