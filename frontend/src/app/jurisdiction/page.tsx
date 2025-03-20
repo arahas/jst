@@ -70,15 +70,16 @@ export default function JurisdictionPage() {
 
     try {
       // Construct API URL with query parameters
-      const apiUrl = new URL('/node/', process.env.NEXT_PUBLIC_API_URL);
-      apiUrl.searchParams.append('delivery_station', formData.delivery_station);
-      apiUrl.searchParams.append('effective_week', formData.effective_week);
-      apiUrl.searchParams.append('program_type', formData.program_type);
-      apiUrl.searchParams.append('recursive', formData.recursive.toString());
-      apiUrl.searchParams.append('geometry', 'true');
-      apiUrl.searchParams.append('population', 'true');
+      const queryParams = new URLSearchParams({
+        delivery_station: formData.delivery_station,
+        effective_week: formData.effective_week,
+        program_type: formData.program_type,
+        recursive: formData.recursive.toString(),
+        geometry: 'true',
+        population: 'true'
+      });
 
-      const response = await fetch(apiUrl.toString());
+      const response = await fetch(`/node/?${queryParams.toString()}`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -92,7 +93,7 @@ export default function JurisdictionPage() {
       });
     } catch (error) {
       console.error('Error fetching jurisdiction data:', error);
-      setError(`Failed to fetch data. Please check if the API server is running at ${process.env.NEXT_PUBLIC_API_URL}`);
+      setError('Failed to fetch data. Please try again later.');
     } finally {
       setIsLoading(false);
     }
