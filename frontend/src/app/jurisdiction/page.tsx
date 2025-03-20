@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import JurisdictionForm from '../components/JurisdictionForm';
 import JurisdictionSummary from '../components/JurisdictionSummary';
 import JurisdictionMap from '../components/JurisdictionMap';
+import JurisdictionChart from '../components/JurisdictionChart';
 
 interface JurisdictionData {
   delivery_station: string;
@@ -17,6 +18,36 @@ export default function JurisdictionPage() {
   const [jurisdictionData, setJurisdictionData] = useState<JurisdictionData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Group features by delivery station and program type
+  const groupedData = useMemo(() => {
+    if (!jurisdictionData?.data?.features) return [];
+
+    const groups = new Map<string, {
+      node: string;
+      program: string;
+      isMainStation: boolean;
+    }>();
+
+    jurisdictionData.data.features.forEach((feature: any) => {
+      const node = feature.properties.delivery_station;
+      const program = feature.properties.program_type;
+      const key = `${node}-${program}`;
+      const isMainStation = node === jurisdictionData.delivery_station;
+
+      if (!groups.has(key)) {
+        groups.set(key, { node, program, isMainStation });
+      }
+    });
+
+    // Convert to array and sort (main station first, then alphabetically)
+    return Array.from(groups.values()).sort((a, b) => {
+      if (a.isMainStation !== b.isMainStation) {
+        return a.isMainStation ? -1 : 1;
+      }
+      return a.node.localeCompare(b.node);
+    });
+  }, [jurisdictionData]);
 
   const handleFormSubmit = async (formData: {
     delivery_station: string;
@@ -100,6 +131,22 @@ export default function JurisdictionPage() {
                 data={jurisdictionData.data} 
                 mainStation={jurisdictionData.delivery_station}
               />
+            </div>
+          </div>
+
+          {/* Population Charts */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Population Trends</h3>
+            <div className="grid grid-cols-1 gap-6">
+              {groupedData.map(({ node, program, isMainStation }) => (
+                <JurisdictionChart
+                  key={`${node}-${program}`}
+                  data={jurisdictionData.data}
+                  node={node}
+                  program={program}
+                  isMainStation={isMainStation}
+                />
+              ))}
             </div>
           </div>
         </div>
