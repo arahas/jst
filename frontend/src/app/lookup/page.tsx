@@ -1,7 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import LookupForm from '../components/LookupForm';
+import PopulationChart from '../components/PopulationChart';
+
+// Import map component dynamically to avoid SSR issues with Leaflet
+const ZipCodeMap = dynamic(
+  () => import('../components/ZipCodeMap'),
+  { ssr: false }
+);
 
 interface PostalCodeEntry {
   tag: string;
@@ -87,23 +95,46 @@ export default function LookupPage() {
           {isLoading ? (
             <div className="text-gray-600">Loading...</div>
           ) : (
-            Object.entries(lookupData).map(([tag, { postalCodes, data }]) => (
-              <div key={tag} className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold mb-2">{tag}</h3>
-                <p className="text-gray-600 mb-4">
-                  Postal Codes: {postalCodes.join(', ')}
-                </p>
-                {data ? (
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500">
-                      Data loaded successfully. Render your visualization components here.
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-red-600">Error loading data for this entry</p>
-                )}
+            <>
+              {/* Map */}
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <ZipCodeMap lookupData={lookupData} />
               </div>
-            ))
+              
+              {/* Population Charts */}
+              <div className="space-y-6">
+                <h3 className="text-xl font-semibold">Population Trends</h3>
+                {Object.entries(lookupData).map(([tag, { data }]) => (
+                  data && (
+                    <div key={tag}>
+                      <PopulationChart tag={tag} data={data} />
+                    </div>
+                  )
+                ))}
+              </div>
+              
+              {/* Text results */}
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold">Summary</h3>
+                {Object.entries(lookupData).map(([tag, { postalCodes, data }]) => (
+                  <div key={tag} className="bg-white p-6 rounded-lg shadow-md">
+                    <h4 className="text-lg font-semibold mb-2">{tag}</h4>
+                    <p className="text-gray-600 mb-4">
+                      Postal Codes: {postalCodes.join(', ')}
+                    </p>
+                    {data ? (
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-500">
+                          Data loaded successfully
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-red-600">Error loading data for this entry</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}
