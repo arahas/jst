@@ -12,15 +12,20 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 
-// Register ChartJS components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+// Add check for window object
+const isBrowser = typeof window !== 'undefined';
+
+// Register ChartJS components only in browser
+if (isBrowser) {
+  ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend
+  );
+}
 
 interface JurisdictionChartProps {
   data: any; // GeoJSON response from the API
@@ -182,6 +187,14 @@ export default function JurisdictionChart({ data, node, program, isMainStation }
       ctx.restore();
     }
   };
+
+  if (!isBrowser) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md h-[400px] flex items-center justify-center">
+        <div className="text-gray-500">Loading chart...</div>
+      </div>
+    );
+  }
 
   if (chartData.datasets.length === 0) {
     return (

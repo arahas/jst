@@ -10,6 +10,9 @@ interface JurisdictionMapProps {
   mainStation: string;
 }
 
+// Add check for window object
+const isBrowser = typeof window !== 'undefined';
+
 // Generate distinct colors for different combinations
 const generateColor = (node: string, program: string, isMainStation: boolean): string => {
   // Base colors for different program types
@@ -151,6 +154,10 @@ export default function JurisdictionMap({ data, mainStation }: JurisdictionMapPr
       return newSet;
     });
   };
+
+  if (!isBrowser) {
+    return <div className="h-[600px] w-full bg-gray-100" />;
+  }
 
   return (
     <div className="relative h-[600px] w-full">

@@ -1,10 +1,20 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import JurisdictionForm from '../components/JurisdictionForm';
 import JurisdictionSummary from '../components/JurisdictionSummary';
-import JurisdictionMap from '../components/JurisdictionMap';
-import JurisdictionChart from '../components/JurisdictionChart';
+
+// Dynamically import components that use window object
+const JurisdictionMap = dynamic(
+  () => import('../components/JurisdictionMap'),
+  { ssr: false }
+);
+
+const JurisdictionChart = dynamic(
+  () => import('../components/JurisdictionChart'),
+  { ssr: false }
+);
 
 interface JurisdictionData {
   delivery_station: string;
