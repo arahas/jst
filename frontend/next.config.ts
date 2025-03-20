@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/node/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL}/node/:path*`,
+        destination: 'https://zipscape-production.up.railway.app/node/:path*',
       },
     ];
   },
