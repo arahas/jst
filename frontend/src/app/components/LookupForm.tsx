@@ -51,11 +51,12 @@ export default function LookupForm({ onSubmit }: LookupFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="amazon-section-title">ZIP Code Lookup</div>
       {entries.map((entry, index) => (
-        <div key={index} className="flex gap-4 items-start">
+        <div key={index} className="amazon-card flex gap-4 items-start">
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[#111111] mb-1">
               Tag
             </label>
             <input
@@ -63,12 +64,12 @@ export default function LookupForm({ onSubmit }: LookupFormProps) {
               value={entry.tag}
               onChange={(e) => handleChange(index, 'tag', e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="amazon-input"
               placeholder="Enter tag"
             />
           </div>
           <div className="flex-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[#111111] mb-1">
               Postal Codes
             </label>
             <input
@@ -76,7 +77,7 @@ export default function LookupForm({ onSubmit }: LookupFormProps) {
               value={entry.postalCodes}
               onChange={(e) => handleChange(index, 'postalCodes', e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="amazon-input"
               placeholder="Enter postal codes (space or comma separated)"
             />
           </div>
@@ -84,7 +85,8 @@ export default function LookupForm({ onSubmit }: LookupFormProps) {
             <button
               type="button"
               onClick={() => handleRemoveEntry(index)}
-              className="mt-6 p-2 text-red-600 hover:text-red-800"
+              className="mt-6 p-2 text-[#c40000] hover:text-[#a00000]"
+              aria-label="Remove entry"
             >
               ✕
             </button>
@@ -96,14 +98,14 @@ export default function LookupForm({ onSubmit }: LookupFormProps) {
         <button
           type="button"
           onClick={handleAddEntry}
-          className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+          className="amazon-link text-sm font-medium flex items-center"
         >
           + Add Another Entry
         </button>
         
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="amazon-button"
         >
           Submit
         </button>

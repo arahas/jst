@@ -1,8 +1,18 @@
 @import "tailwindcss";
 
 :root {
+  --amazon-blue: #232f3e;
+  --amazon-orange: #ff9900;
+  --amazon-light-orange: #febd69;
+  --amazon-dark-gray: #232F3F;
+  --amazon-light-gray: #f3f3f3;
+  --amazon-text: #111111;
+  --amazon-link: #007185;
+  --amazon-button: #ffd814;
+  --amazon-button-hover: #f7ca00;
+  --amazon-error: #c40000;
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111111;
 }
 
 @theme inline {
@@ -15,7 +25,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: #111111;
   }
 }
 
@@ -23,4 +33,62 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Amazon-style button */
+.amazon-button {
+  background-color: var(--amazon-button);
+  border: 1px solid #fcd200;
+  border-radius: 8px;
+  color: var(--amazon-text);
+  cursor: pointer;
+  font-weight: 500;
+  padding: 8px 16px;
+  transition: all 0.2s;
+}
+
+.amazon-button:hover {
+  background-color: var(--amazon-button-hover);
+}
+
+/* Amazon-style input */
+.amazon-input {
+  border: 1px solid #a6a6a6;
+  border-radius: 3px;
+  padding: 8px;
+  width: 100%;
+}
+
+.amazon-input:focus {
+  border-color: var(--amazon-orange);
+  box-shadow: 0 0 3px 2px rgb(228 121 17 / 50%);
+  outline: none;
+}
+
+/* Amazon-style card */
+.amazon-card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+/* Amazon-style section title */
+.amazon-section-title {
+  color: var(--amazon-text);
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+/* Amazon-style link */
+.amazon-link {
+  color: var(--amazon-link);
+  text-decoration: none;
+}
+
+.amazon-link:hover {
+  color: var(--amazon-orange);
+  text-decoration: underline;
 }

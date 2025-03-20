@@ -112,16 +112,18 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="amazon-section-title">Jurisdiction Search</div>
+      
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+        <div className="bg-[#fff5f5] border border-[#c40000] text-[#c40000] px-4 py-3 rounded">
           {error}
         </div>
       )}
 
       {/* Delivery Station Input */}
-      <div className="relative">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+      <div className="amazon-card">
+        <label className="block text-sm font-medium text-[#111111] mb-1">
           Delivery Station
         </label>
         <div className="relative">
@@ -129,10 +131,10 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
             type="text"
             value={formData.delivery_station}
             onChange={(e) => handleStationInput(e.target.value)}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+            className={`amazon-input ${
               isDirty && errors.delivery_station
-                ? 'border-red-300 focus:ring-red-500'
-                : 'border-gray-300 focus:ring-blue-500'
+                ? 'border-[#c40000] focus:border-[#c40000] focus:shadow-[0_0_3px_2px_rgba(196,0,0,0.5)]'
+                : ''
             }`}
             placeholder="Enter delivery station (e.g., DNK5)"
             maxLength={4}
@@ -140,31 +142,31 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
           />
           {formData.delivery_station && !errors.delivery_station && (
             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <svg className="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5 text-[#007600]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
           )}
         </div>
         {isDirty && errors.delivery_station && (
-          <p className="mt-1 text-sm text-red-600">
+          <p className="mt-1 text-sm text-[#c40000]">
             {errors.delivery_station}
           </p>
         )}
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-[#232F3F]">
           Format: 3 letters followed by 1 number (e.g., DNK5, DWA2)
         </p>
       </div>
 
       {/* Effective Week Select */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+      <div className="amazon-card">
+        <label className="block text-sm font-medium text-[#111111] mb-1">
           Effective Week
         </label>
         <select
           value={formData.effective_week}
           onChange={(e) => setFormData(prev => ({ ...prev, effective_week: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="amazon-input"
           disabled={isLoadingWeeks}
         >
           {isLoadingWeeks ? (
@@ -180,8 +182,8 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
       </div>
 
       {/* Program Type Select */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+      <div className="amazon-card">
+        <label className="block text-sm font-medium text-[#111111] mb-1">
           Program Type
         </label>
         <select
@@ -190,7 +192,7 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
             ...prev, 
             program_type: e.target.value as 'all' | 'core' | 'ssd'
           }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="amazon-input"
         >
           <option value="all">All</option>
           <option value="core">Core</option>
@@ -199,15 +201,15 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
       </div>
 
       {/* Recursive Search Checkbox */}
-      <div className="flex items-center">
+      <div className="amazon-card flex items-center">
         <input
           type="checkbox"
           id="recursive"
           checked={formData.recursive}
           onChange={(e) => setFormData(prev => ({ ...prev, recursive: e.target.checked }))}
-          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          className="h-4 w-4 text-[#ff9900] focus:ring-[#ff9900] border-gray-300 rounded"
         />
-        <label htmlFor="recursive" className="ml-2 block text-sm text-gray-700">
+        <label htmlFor="recursive" className="ml-2 block text-sm text-[#111111]">
           Include recursive search
         </label>
       </div>
@@ -215,11 +217,11 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
       {/* Submit Button */}
       <button
         type="submit"
-        className={`w-full px-4 py-2 text-white font-medium rounded-md 
-          ${isDirty && errors.delivery_station
-            ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-blue-600 hover:bg-blue-700'
-          }`}
+        className={`amazon-button w-full ${
+          isDirty && errors.delivery_station
+            ? 'opacity-50 cursor-not-allowed'
+            : ''
+        }`}
         disabled={isDirty && !!errors.delivery_station}
       >
         Search

@@ -19,11 +19,11 @@ interface SummaryCard {
 const getProgramBadgeClasses = (program: string) => {
   switch (program.toLowerCase()) {
     case 'core':
-      return 'bg-blue-100 text-blue-800';
+      return 'bg-[#eaf4fe] text-[#0066c0]';
     case 'ssd':
-      return 'bg-green-100 text-green-800';
+      return 'bg-[#f1f8f1] text-[#007600]';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-[#f5f5f5] text-[#232F3F]';
   }
 };
 
@@ -81,30 +81,30 @@ export default function JurisdictionSummary({ data, mainStation }: JurisdictionS
 
   if (!summaryCards.length) {
     return (
-      <div className="bg-gray-50 p-4 rounded-lg text-center text-gray-500">
+      <div className="amazon-card text-center text-[#232F3F]">
         No jurisdiction data available
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {summaryCards.map((card, index) => (
         <div
           key={`${card.node}-${card.program}`}
-          className={`bg-white p-6 rounded-lg shadow-md border transition-shadow ${
+          className={`amazon-card ${
             card.isMainStation 
-              ? 'border-blue-300 shadow-blue-100' 
-              : 'border-gray-200'
-          } hover:shadow-lg`}
+              ? 'border-[#ff9900] shadow-[0_0_3px_1px_rgba(255,153,0,0.3)]' 
+              : ''
+          }`}
         >
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-2">
-              <h3 className="text-xl font-semibold text-gray-900">
+              <h3 className="text-xl font-semibold text-[#111111]">
                 {card.node}
               </h3>
               {card.isMainStation && (
-                <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-xs font-medium">
+                <span className="px-2 py-0.5 bg-[#fff8e7] text-[#c45500] rounded text-xs font-medium">
                   Main
                 </span>
               )}
@@ -114,33 +114,33 @@ export default function JurisdictionSummary({ data, mainStation }: JurisdictionS
             </span>
           </div>
 
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-[#232F3F] mb-4">
             Effective Week: {card.effectiveWeek}
           </p>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div>
-              <p className="text-sm font-medium text-gray-500">Coverage Statistics</p>
-              <div className="mt-1 grid grid-cols-2 gap-4">
+              <p className="text-sm font-medium text-[#232F3F]">Coverage Statistics</p>
+              <div className="mt-2 grid grid-cols-2 gap-6">
                 <div>
-                  <p className="text-2xl font-semibold text-gray-900">
+                  <p className="text-2xl font-semibold text-[#111111]">
                     {card.postalCodes.length}
                   </p>
-                  <p className="text-sm text-gray-500">Postal Codes</p>
+                  <p className="text-sm text-[#232F3F]">Postal Codes</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold text-gray-900">
+                  <p className="text-2xl font-semibold text-[#111111]">
                     {card.population.toLocaleString()}
                   </p>
-                  <p className="text-sm text-gray-500">Population</p>
+                  <p className="text-sm text-[#232F3F]">Population</p>
                 </div>
               </div>
             </div>
 
             <div>
-              <p className="text-sm font-medium text-gray-500 mb-2">Postal Codes</p>
-              <div className="bg-gray-50 p-3 rounded-md">
-                <p className="text-sm text-gray-600 break-words">
+              <p className="text-sm font-medium text-[#232F3F] mb-2">Postal Codes</p>
+              <div className="bg-[#f5f5f5] p-3 rounded">
+                <p className="text-sm text-[#111111] break-words">
                   {card.postalCodes.sort().join(', ')}
                 </p>
               </div>
