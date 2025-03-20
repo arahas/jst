@@ -18,6 +18,10 @@ interface FormData {
   recursive: boolean;
 }
 
+interface ValidationErrors {
+  delivery_station?: string;
+}
+
 export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
   // Form state
   const [formData, setFormData] = useState<FormData>({
@@ -26,6 +30,10 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
     program_type: 'all',
     recursive: false
   });
+
+  // Validation state
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [isDirty, setIsDirty] = useState(false);
 
   // UI state for searchable dropdowns
   const [effectiveWeeks, setEffectiveWeeks] = useState<string[]>([]);
@@ -61,40 +69,45 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
     fetchEffectiveWeeks();
   }, []);
 
-  // Handle delivery station input with search functionality
-  const handleStationInput = async (value: string) => {
-    setFormData(prev => ({ ...prev, delivery_station: value }));
-    setShowStationSuggestions(true);
-
-    try {
-      // Call the node endpoint with partial match to get suggestions
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/node/?delivery_station=${value}`
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      
-      // Extract unique delivery stations from the response
-      const stations = new Set<string>();
-      if (data.metadata?.delivery_stations) {
-        data.metadata.delivery_stations.forEach((station: string) => stations.add(station));
-      }
-      setStationSuggestions(Array.from(stations));
-    } catch (error) {
-      console.error('Error fetching station suggestions:', error);
-      setStationSuggestions([]);
+  // Validate delivery station
+  const validateDeliveryStation = (value: string): string | undefined => {
+    if (!value) {
+      return 'Delivery station is required';
     }
+    
+    // Check for exactly 4 characters: 3 letters followed by 1 number
+    const stationPattern = /^[A-Za-z]{3}[0-9]$/;
+    if (!stationPattern.test(value)) {
+      return 'Delivery station must be 3 letters followed by 1 number (e.g., DNK5)';
+    }
+    
+    return undefined;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Handle delivery station input with validation
+  const handleStationInput = (value: string) => {
+    // Convert to uppercase as station codes are typically uppercase
+    const upperValue = value.toUpperCase();
+    setFormData(prev => ({ ...prev, delivery_station: upperValue }));
+    setIsDirty(true);
+
+    // Validate and set errors
+    const error = validateDeliveryStation(upperValue);
+    setErrors(prev => ({ ...prev, delivery_station: error }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.delivery_station) {
-      setError('Please enter a delivery station');
+    setIsDirty(true);
+
+    // Validate before submission
+    const stationError = validateDeliveryStation(formData.delivery_station);
+    if (stationError) {
+      setErrors({ delivery_station: stationError });
       return;
     }
-    setError(null);
+
+    setErrors({});
     onSubmit(formData);
   };
 
@@ -106,36 +119,41 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
         </div>
       )}
 
-      {/* Delivery Station Input with Suggestions */}
+      {/* Delivery Station Input */}
       <div className="relative">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Delivery Station
         </label>
-        <input
-          type="text"
-          value={formData.delivery_station}
-          onChange={(e) => handleStationInput(e.target.value)}
-          onFocus={() => setShowStationSuggestions(true)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter delivery station (e.g., DAB5)"
-          required
-        />
-        {showStationSuggestions && stationSuggestions.length > 0 && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-            {stationSuggestions.map((station) => (
-              <div
-                key={station}
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => {
-                  setFormData(prev => ({ ...prev, delivery_station: station }));
-                  setShowStationSuggestions(false);
-                }}
-              >
-                {station}
-              </div>
-            ))}
-          </div>
+        <div className="relative">
+          <input
+            type="text"
+            value={formData.delivery_station}
+            onChange={(e) => handleStationInput(e.target.value)}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+              isDirty && errors.delivery_station
+                ? 'border-red-300 focus:ring-red-500'
+                : 'border-gray-300 focus:ring-blue-500'
+            }`}
+            placeholder="Enter delivery station (e.g., DNK5)"
+            maxLength={4}
+            required
+          />
+          {formData.delivery_station && !errors.delivery_station && (
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <svg className="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          )}
+        </div>
+        {isDirty && errors.delivery_station && (
+          <p className="mt-1 text-sm text-red-600">
+            {errors.delivery_station}
+          </p>
         )}
+        <p className="mt-1 text-xs text-gray-500">
+          Format: 3 letters followed by 1 number (e.g., DNK5, DWA2)
+        </p>
       </div>
 
       {/* Effective Week Select */}
@@ -197,10 +215,14 @@ export default function JurisdictionForm({ onSubmit }: JurisdictionFormProps) {
       {/* Submit Button */}
       <button
         type="submit"
-        className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        disabled={isLoadingWeeks}
+        className={`w-full px-4 py-2 text-white font-medium rounded-md 
+          ${isDirty && errors.delivery_station
+            ? 'bg-gray-400 cursor-not-allowed'
+            : 'bg-blue-600 hover:bg-blue-700'
+          }`}
+        disabled={isDirty && !!errors.delivery_station}
       >
-        {isLoadingWeeks ? 'Loading...' : 'Submit'}
+        Search
       </button>
     </form>
   );

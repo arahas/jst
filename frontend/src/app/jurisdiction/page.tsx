@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import JurisdictionForm from '../components/JurisdictionForm';
 import JurisdictionSummary from '../components/JurisdictionSummary';
+import JurisdictionMap from '../components/JurisdictionMap';
 
 interface JurisdictionData {
   delivery_station: string;
@@ -91,7 +92,16 @@ export default function JurisdictionPage() {
             />
           </div>
 
-          {/* Additional visualizations will be added here */}
+          {/* Map View */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Geographic Coverage</h3>
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <JurisdictionMap 
+                data={jurisdictionData.data} 
+                mainStation={jurisdictionData.delivery_station}
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>
