@@ -8,16 +8,8 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Database connection parameters
-DB_USER = os.getenv("DB_USER", "jinwooje")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME", "jstdb")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
-
-# Create database URL
-password_str = f":{DB_PASSWORD}" if DB_PASSWORD else ""
-DATABASE_URL = f"postgresql://{DB_USER}{password_str}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+# Load DATABASE_URL from environment
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Create SQLAlchemy engine
 engine = create_engine(
